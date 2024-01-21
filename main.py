@@ -5,6 +5,7 @@ from app import app, db
 from app.models import User, user_share_schema, users_share_schema
 import datetime
 import jwt
+from app.authenticate import jwt_required
 
 Migrate(app, db)
 
@@ -43,6 +44,8 @@ def login():
     email = request.json['email']
     password = request.json['password']
 
+    print(password)
+
     user = User.query.filter_by(email=email).first_or_404()
 
     if not user.verify_password(password):
@@ -54,7 +57,17 @@ def login():
         "id":user.id,
         "exp":datetime.datetime.utcnow() + datetime.timedelta(minutes=10)
     }
-    
-    token = jwt.encode(payload, app.config['SECRET_KEY'])
 
-    return jsonify({"token" : token.decode('utf-8')})
+    token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
+
+    return jsonify({"token" : token})
+
+@app.route('/auth/protected')
+@jwt_required
+def protected(current_user):
+
+    result = users_share_schema.dump(
+        User.query.all()
+    )
+
+    return jsonify(result)

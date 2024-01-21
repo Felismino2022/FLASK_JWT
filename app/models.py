@@ -1,6 +1,8 @@
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db, ma
+from flask_bcrypt import Bcrypt
 
+bcrypt = Bcrypt()
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
@@ -11,10 +13,11 @@ class User(db.Model):
     def __init__(self, username, email, password):
         self.username = username
         self.email = email
-        self.password = generate_password_hash(password)
+        self.password = bcrypt.generate_password_hash(password)
+
 
     def verify_password(self, password):
-        return check_password_hash(self.password, password)
+        return bcrypt.check_password_hash(self.password, password)
     
     def __repr__(self):
         return f"<User : {self.username}>"
